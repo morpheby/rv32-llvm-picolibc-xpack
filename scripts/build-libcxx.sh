@@ -28,6 +28,12 @@ INSTALL_PREFIX="${INSTALL_PREFIX:-/usr/local/llvm-riscv}"
 
 SYSROOT="${DIST_DIR}/dist"
 
+# multilib.yaml must be present before the build so that clang can use
+# multilib selection to locate the picolibc/compiler-rt headers and libs
+# installed in the per-variant subdirectories of the sysroot.
+mkdir -p "${SYSROOT}"
+cp -f multilib.yaml "${SYSROOT}/"
+
 variants=(
   rv32imafc-zicsr-zifencei-xwchc_ilp32f_exn_rtti
   rv32imafc-zicsr-zifencei-xwchc_ilp32f
@@ -71,6 +77,7 @@ for i in "${!variants[@]}" ; do
     -DCMAKE_C_COMPILER="$(which clang)"                                       \
     -DCMAKE_NM="$(which llvm-nm)"                                             \
     -DCMAKE_RANLIB="$(which llvm-ranlib)"                                     \
+    -DLLVM_USE_LINKER=lld                                                     \
     -DCMAKE_SYSTEM_NAME=Generic                                               \
     -DCMAKE_BUILD_TYPE=Release                                                \
     -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY                            \
@@ -125,6 +132,3 @@ for i in "${!variants[@]}" ; do
   mkdir -p "${DIST_DIR}/dist/${b}/"
   cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/." "${DIST_DIR}/dist/${b}/"
 done
-
-# Copy multilib.yaml to the sysroot root so clang can locate the right variant
-cp -f multilib.yaml "${DIST_DIR}/dist/"

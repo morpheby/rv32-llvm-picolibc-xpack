@@ -52,6 +52,7 @@ for i in "${!variants[@]}" ; do
     -DCMAKE_C_COMPILER="$(which clang)"                                       \
     -DCMAKE_NM="$(which llvm-nm)"                                             \
     -DCMAKE_RANLIB="$(which llvm-ranlib)"                                     \
+    -DLLVM_USE_LINKER=lld                                                     \
     -DCMAKE_SYSTEM_NAME=Generic                                               \
     -DCMAKE_BUILD_TYPE=Release                                                \
     -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY                            \
