@@ -7,19 +7,21 @@
 #   _CH32_DEFAULT_MARCH   Default -march string for the target family
 #                         (e.g. "rv32imafc_zicsr_zifencei_xwchc")
 #   _CH32_DEFAULT_MABI    Default -mabi string (e.g. "ilp32f")
-#   _CH32_NO_EXCEPTIONS   TRUE → add -fno-exceptions to compile flags
-#   _CH32_NO_RTTI         TRUE → add -fno-rtti to compile flags
+#   _CH32_NO_EXCEPTIONS   TRUE: add -fno-exceptions to compile flags
+#   _CH32_NO_RTTI         TRUE: add -fno-rtti to compile flags
 #
 # The resulting configuration selects the corresponding multilib variant
 # automatically via the multilib.yaml embedded in the sysroot.
 #
-# User-facing cache variables (can be overridden on the cmake command line):
-#   LLVM_TOOLCHAIN - sysroot root directory (contains dist/ with multilib.yaml);
-#                    auto-inferred as <cmake-dir>/../dist when using a release
-#                    tarball — no need to set this manually in that case
+# Settings:
 #   TOOLCHAIN_PATH - path to clang bin/ directory (empty = use PATH)
 #   CH32_MARCH     - RISC-V -march string (defaults to _CH32_DEFAULT_MARCH)
 #   CH32_MABI      - RISC-V -mabi string  (defaults to _CH32_DEFAULT_MABI)
+#
+# Note: Some LLVM builds distributed not from llvm.org don't support all architecture flags/variants
+# needed to build CH32V firmware. Ideally you should always rely on llvm.org-provided releases.
+#
+# Note (macOS): LLVM packaged with Xcode DOES NOT support RISC-V. Download a release from llvm.org.
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -29,9 +31,6 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # ----- Toolchain prefix -----
 set(CROSS_COMPILE "riscv-unknown-none-elf-" CACHE STRING "Toolchain prefix")
-
-# ----- Local developer config (LLVM_TOOLCHAIN etc.) -----
-include("${CMAKE_CURRENT_LIST_DIR}/../local-config.cmake" OPTIONAL)
 
 # ----- Toolchain path detection -----
 if(NOT DEFINED TOOLCHAIN_PATH)
@@ -76,37 +75,8 @@ set(ARCH_FLAGS
 
 string(JOIN " " ARCH_FLAGS_STR ${ARCH_FLAGS})
 
-# ----- Sysroot (from LLVM_TOOLCHAIN root) -----
-# LLVM_TOOLCHAIN may be provided by (in decreasing priority):
-#   1. -DLLVM_TOOLCHAIN=<path> on the cmake command line
-#   2. local-config.cmake (included above)
-#   3. Auto-inferred as <cmake-dir>/../dist when using a release tarball
-#      (where cmake/ and dist/ are placed as siblings by package-dist.sh)
-#
-# The toolchain uses multilib; clang selects the correct variant automatically
-# from the -march/-mabi/-fno-exceptions/-fno-rtti flags via multilib.yaml.
-if(NOT LLVM_TOOLCHAIN)
-    get_filename_component(_INFERRED_SYSROOT
-        "${CMAKE_CURRENT_LIST_DIR}/../dist" ABSOLUTE)
-    if(EXISTS "${_INFERRED_SYSROOT}")
-        set(LLVM_TOOLCHAIN "${_INFERRED_SYSROOT}"
-            CACHE PATH "Sysroot directory (auto-inferred from toolchain file location)")
-        message(STATUS "LLVM_TOOLCHAIN auto-inferred: ${LLVM_TOOLCHAIN}")
-    endif()
-endif()
-
-if(NOT LLVM_TOOLCHAIN)
-    message(FATAL_ERROR
-        "LLVM_TOOLCHAIN is not set and could not be auto-inferred.\n"
-        "Expected a dist/ directory next to the cmake/ directory "
-        "(standard release tarball layout).\n"
-        "Set it explicitly with -DLLVM_TOOLCHAIN=<path> or via local-config.cmake.")
-endif()
-if(NOT EXISTS "${LLVM_TOOLCHAIN}")
-    message(FATAL_ERROR
-        "LLVM_TOOLCHAIN directory not found: ${LLVM_TOOLCHAIN}\n"
-        "Check the path set via -DLLVM_TOOLCHAIN or in local-config.cmake.")
-endif()
+get_filename_component(LLVM_TOOLCHAIN
+    "${CMAKE_CURRENT_LIST_DIR}/../dist" ABSOLUTE)
 
 # ----- Exception / RTTI flags -----
 set(_EXN_RTTI_FLAGS "")
@@ -146,21 +116,14 @@ set(CMAKE_C_FLAGS_INIT   "-std=gnu23 ${COMMON_FLAGS_STR}")
 set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS_STR} -std=gnu++20 -fno-threadsafe-statics -fno-use-cxa-atexit -fpermissive")
 set(CMAKE_ASM_FLAGS_INIT "${ARCH_FLAGS_STR} --target=riscv32-unknown-none-elf -x assembler-with-cpp")
 
-# ----- Linker flags -----
-# NOTE: -lch32_hal must be provided by the application project (via
-#       third_party/ch32_hal or an equivalent target).  Adjust the -L path to
-#       match the project layout.
-# NOTE: For the exn+rtti variants (i.e. when _CH32_NO_EXCEPTIONS is FALSE),
-#       add -lc++ to the project's link step to pull in libc++, libc++abi and
-#       libunwind (all statically linked inside libc++.a in the sysroot).
 set(CMAKE_EXE_LINKER_FLAGS_INIT
     "--sysroot=${LLVM_TOOLCHAIN} ${ARCH_FLAGS_STR} \
--Wl,--gc-sections \
--lch32_hal -lcrt0 -lcrt0-inittls \
--Wl,--defsym=vfprintf=__f_vfprintf \
--Wl,--defsym=vfscanf=__m_vfscanf \
--nostartfiles \
--Lthird_party/ch32_hal")
+    -Wl,--gc-sections \
+    -lch32_hal -lcrt0 -lcrt0-inittls \
+    -Wl,--defsym=vfprintf=__f_vfprintf \
+    -Wl,--defsym=vfscanf=__m_vfscanf \
+    -nostartfiles \
+    -Lthird_party/ch32_hal")
 
 # TODO: Those are some things Espressif uses for optimization. Consider the impact later.
     # -mllvm -inline-threshold=500
