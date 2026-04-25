@@ -47,6 +47,7 @@ for i in "${!variants[@]}" ; do
 
   COMMON_FLAGS="$a"
   cmake -G Ninja -S runtimes -B "build-compiler_rt-${b}"                      \
+    -DLLVM_INCLUDE_TESTS=OFF                                                  \
     -DCMAKE_AR="$(which llvm-ar)"                                             \
     -DCMAKE_CXX_COMPILER="$(which clang++)"                                   \
     -DCMAKE_C_COMPILER="$(which clang)"                                       \

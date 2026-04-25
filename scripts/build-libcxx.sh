@@ -86,6 +86,7 @@ for i in "${!variants[@]}" ; do
 
   # shellcheck disable=SC2086
   cmake -G Ninja -S runtimes -B "build-libcxx-${b}"                           \
+    -DLLVM_INCLUDE_TESTS=OFF                                                  \
     -DCMAKE_AR="$(which llvm-ar)"                                             \
     -DCMAKE_CXX_COMPILER="$(which clang++)"                                   \
     -DCMAKE_C_COMPILER="$(which clang)"                                       \
