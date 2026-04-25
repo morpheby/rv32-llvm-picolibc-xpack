@@ -141,6 +141,15 @@ for i in "${!variants[@]}" ; do
   ninja -C "build-libcxx-${b}"
   DESTDIR="./dist" ninja -C "build-libcxx-${b}" install
 
-  mkdir -p "${DIST_DIR}/dist/${b}/"
-  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/." "${DIST_DIR}/dist/${b}/"
+  # Headers are variant-independent (same libc++/libunwind headers regardless
+  # of exception/RTTI/locale settings); install once at the top-level sysroot
+  # include dir so that clang's BareMetal driver finds them via --sysroot.
+  mkdir -p "${DIST_DIR}/dist/include/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/include/." \
+      "${DIST_DIR}/dist/include/"
+
+  # Libraries are variant-specific; install per-variant.
+  mkdir -p "${DIST_DIR}/dist/${b}/lib/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/lib/." \
+      "${DIST_DIR}/dist/${b}/lib/"
 done
