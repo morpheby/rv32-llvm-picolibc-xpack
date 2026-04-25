@@ -1,5 +1,5 @@
 diff --git a/compiler-rt/CMakeLists.txt b/compiler-rt/CMakeLists.txt
-index 9f8e8334d..4102344c0 100644
+index 9f8e8334..4102344c 100644
 --- a/compiler-rt/CMakeLists.txt
 +++ b/compiler-rt/CMakeLists.txt
 @@ -493,13 +493,13 @@ if(MSVC)
@@ -24,34 +24,10 @@ index 9f8e8334d..4102344c0 100644
    list(APPEND SANITIZER_COMMON_CFLAGS -gline-tables-only)
  elseif(COMPILER_RT_HAS_G_FLAG)
 diff --git a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake b/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
-index 03db38fa4..0cf69504b 100644
+index 03db38fa..3aef7a1e 100644
 --- a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
 +++ b/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
-@@ -119,10 +119,12 @@ macro(test_target_arch arch def)
-   if(NOT DEFINED CAN_TARGET_${arch})
-     if(NOT HAS_${arch}_DEF)
-       set(CAN_TARGET_${arch} FALSE)
-+      message("${arch} is not supported because ${def} is not defined")
-     elseif(TEST_COMPILE_ONLY)
-       try_compile_only(CAN_TARGET_${arch}
-                        SOURCE "#include <limits.h>\nint foo(int x, int y) { return x + y; }\n"
-                        FLAGS ${TARGET_${arch}_CFLAGS})
-+      message("${arch} is ${CAN_TARGET_${arch}} (compile only)")
-     else()
-       set(FLAG_NO_EXCEPTIONS "")
-       if(COMPILER_RT_HAS_FNO_EXCEPTIONS_FLAG)
-@@ -134,8 +136,10 @@ macro(test_target_arch arch def)
-                   COMPILE_DEFINITIONS "${TARGET_${arch}_CFLAGS} ${FLAG_NO_EXCEPTIONS}"
-                   OUTPUT_VARIABLE TARGET_${arch}_OUTPUT)
-       set(CMAKE_EXE_LINKER_FLAGS ${SAVED_CMAKE_EXE_LINKER_FLAGS})
-+      message("${arch} no except")
-     endif()
-   endif()
-+  message("${arch} is ${CAN_TARGET_${arch}}")
-   if(${CAN_TARGET_${arch}})
-     list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
-   elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" STREQUAL "${arch}" AND
-@@ -378,8 +382,7 @@ macro(construct_compiler_rt_default_triple)
+@@ -378,8 +378,7 @@ macro(construct_compiler_rt_default_triple)
      if (target_triple MATCHES "aix")
        string(REGEX REPLACE "[0-9.]+$" "" target_triple "${target_triple}")
      endif()
@@ -61,32 +37,23 @@ index 03db38fa4..0cf69504b 100644
    endif()
  
    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-diff --git a/compiler-rt/cmake/base-config-ix.cmake b/compiler-rt/cmake/base-config-ix.cmake
-index d92bc0e71..018f59c70 100644
---- a/compiler-rt/cmake/base-config-ix.cmake
-+++ b/compiler-rt/cmake/base-config-ix.cmake
-@@ -210,6 +210,7 @@ macro(test_targets)
-     detect_target_arch()
-     set(COMPILER_RT_OS_SUFFIX "-android")
-   elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
-+    message(STATUS "Testing default target architecture ${COMPILER_RT_DEFAULT_TARGET_ARCH}")
-     if(COMPILER_RT_DEFAULT_TARGET_ONLY)
-       add_default_target_arch(${COMPILER_RT_DEFAULT_TARGET_ARCH})
-     elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "i[2-6]86|x86|amd64")
 diff --git a/libc/cmake/modules/LLVMLibCArchitectures.cmake b/libc/cmake/modules/LLVMLibCArchitectures.cmake
-index c94a407d9..0fd749eaf 100644
+index c94a407d..275686da 100644
 --- a/libc/cmake/modules/LLVMLibCArchitectures.cmake
 +++ b/libc/cmake/modules/LLVMLibCArchitectures.cmake
-@@ -94,6 +94,7 @@ if(NOT libc_compiler_target_info)
+@@ -94,6 +94,10 @@ if(NOT libc_compiler_target_info)
  endif()
  string(STRIP ${libc_compiler_target_info} libc_compiler_target_info)
  string(SUBSTRING ${libc_compiler_target_info} 8 -1 libc_compiler_triple)
++# The compiler detection query produces a triple that may differ from the
++# canonical bare-metal target (e.g. missing sub-extensions).  Override it
++# so that libc's architecture detection succeeds for RISC-V 32-bit targets.
 +set(libc_compiler_triple "riscv32-unknown-none-elf")
  get_arch_and_system_from_triple(${libc_compiler_triple}
                                  compiler_arch compiler_sys)
  if(NOT compiler_arch)
 diff --git a/libc/src/__support/CPP/limits.h b/libc/src/__support/CPP/limits.h
-index cf4beb9cc..093c713f6 100644
+index cf4beb9c..093c713f 100644
 --- a/libc/src/__support/CPP/limits.h
 +++ b/libc/src/__support/CPP/limits.h
 @@ -15,6 +15,21 @@
@@ -112,7 +79,7 @@ index cf4beb9cc..093c713f6 100644
  namespace LIBC_NAMESPACE_DECL {
  namespace cpp {
 diff --git a/libcxx/src/CMakeLists.txt b/libcxx/src/CMakeLists.txt
-index f59fe0e08..2dfccebbf 100644
+index f59fe0e0..2dfccebb 100644
 --- a/libcxx/src/CMakeLists.txt
 +++ b/libcxx/src/CMakeLists.txt
 @@ -172,39 +172,42 @@ split_list(LIBCXX_LINK_FLAGS)
@@ -190,7 +157,7 @@ index f59fe0e08..2dfccebbf 100644
  
  # Maybe force some symbols to be weak, not weak or not exported.
 diff --git a/libcxxabi/CMakeLists.txt b/libcxxabi/CMakeLists.txt
-index cf478bcee..812f6df89 100644
+index cf478bce..812f6df8 100644
 --- a/libcxxabi/CMakeLists.txt
 +++ b/libcxxabi/CMakeLists.txt
 @@ -49,6 +49,8 @@ include(HandleCompilerRT)
@@ -203,7 +170,7 @@ index cf478bcee..812f6df89 100644
  option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." OFF)
  option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 diff --git a/libcxxabi/src/CMakeLists.txt b/libcxxabi/src/CMakeLists.txt
-index 0675577ae..d70f08ec9 100644
+index 0675577a..d70f08ec 100644
 --- a/libcxxabi/src/CMakeLists.txt
 +++ b/libcxxabi/src/CMakeLists.txt
 @@ -16,7 +16,6 @@ set(LIBCXXABI_SOURCES
@@ -244,7 +211,7 @@ index 0675577ae..d70f08ec9 100644
  endif()
  if (LIBCXXABI_INSTALL_SHARED_LIBRARY)
 diff --git a/libunwind/src/CMakeLists.txt b/libunwind/src/CMakeLists.txt
-index 71663a22c..1a4a62123 100644
+index 71663a22..1a4a6212 100644
 --- a/libunwind/src/CMakeLists.txt
 +++ b/libunwind/src/CMakeLists.txt
 @@ -147,6 +147,7 @@ if (CMAKE_POSITION_INDEPENDENT_CODE OR NOT DEFINED CMAKE_POSITION_INDEPENDENT_CO

@@ -70,6 +70,15 @@ Variants:
   - -fno-rtti
   - -fno-exceptions
   Group: stdlibs
+- Dir: rv32imac-zicsr-zifencei-xwchc_ilp32_minimal
+  Flags:
+  - --target=riscv32-unknown-none-elf
+  - -march=rv32i2p1_m2p0_a2p1_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_xwchc2p2
+  - -mabi=ilp32
+  - -fno-rtti
+  - -fno-exceptions
+  - -D_PICOLIBC_NO_LOCALE=1
+  Group: stdlibs
 - Dir: rv32imafc-zicsr-zifencei-xwchc_ilp32f_exn_rtti
   Flags:
   - --target=riscv32-unknown-none-elf
@@ -90,6 +99,15 @@ Variants:
   - -mabi=ilp32f
   - -fno-rtti
   - -fno-exceptions
+  Group: stdlibs
+- Dir: rv32imafc-zicsr-zifencei-xwchc_ilp32f_minimal
+  Flags:
+  - --target=riscv32-unknown-none-elf
+  - -march=rv32i2p1_m2p0_a2p1_f2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcf1p0_xwchc2p2
+  - -mabi=ilp32f
+  - -fno-rtti
+  - -fno-exceptions
+  - -D_PICOLIBC_NO_LOCALE=1
   Group: stdlibs
 
 

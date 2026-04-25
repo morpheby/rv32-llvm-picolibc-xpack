@@ -37,36 +37,50 @@ cp -f multilib.yaml "${SYSROOT}/"
 variants=(
   rv32imafc-zicsr-zifencei-xwchc_ilp32f_exn_rtti
   rv32imafc-zicsr-zifencei-xwchc_ilp32f
+  rv32imafc-zicsr-zifencei-xwchc_ilp32f_minimal
   rv32imac-zicsr-zifencei-xwchc_ilp32_exn_rtti
   rv32imac-zicsr-zifencei-xwchc_ilp32
+  rv32imac-zicsr-zifencei-xwchc_ilp32_minimal
 )
 
 cmake_flags=(
   "-DLIBCXXABI_ENABLE_EXCEPTIONS=YES -DLIBCXX_ENABLE_EXCEPTIONS=YES -DLIBCXXABI_ENABLE_STATIC_UNWINDER=YES -DLIBCXX_ENABLE_RTTI=YES -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=ON -DLIBCXXABI_ENABLE_RTTI=ON"
-  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF -DLIBCXXABI_ENABLE_RTTI=OFF"
+  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF"
+  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF -DLIBCXX_ENABLE_LOCALIZATION=OFF -DLIBCXX_ENABLE_WIDE_CHARACTERS=OFF"
   "-DLIBCXXABI_ENABLE_EXCEPTIONS=YES -DLIBCXX_ENABLE_EXCEPTIONS=YES -DLIBCXXABI_ENABLE_STATIC_UNWINDER=YES -DLIBCXX_ENABLE_RTTI=YES -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=ON -DLIBCXXABI_ENABLE_RTTI=ON"
-  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF -DLIBCXXABI_ENABLE_RTTI=OFF"
+  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF"
+  "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF -DLIBCXX_ENABLE_LOCALIZATION=OFF -DLIBCXX_ENABLE_WIDE_CHARACTERS=OFF"
 )
 
+# Compile flags per variant.  The _minimal variants use the same architecture
+# and exception/RTTI flags as their base counterparts; their distinction is
+# in cmake_flags (LIBCXX_ENABLE_LOCALIZATION=OFF / LIBCXX_ENABLE_WIDE_CHARACTERS=OFF)
+# and in how picolibc was built (-Dmb-capable=false).
 flags=(
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT}"
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
+  "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"  # minimal
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT}"
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
+  "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"  # minimal
 )
 
+# Which runtimes to build per variant.  Variants with exceptions need libunwind;
+# no-exn and minimal variants only need libcxxabi and libcxx.
 runtimes=(
   "libcxxabi;libcxx;libunwind"
   "libcxxabi;libcxx"
+  "libcxxabi;libcxx"  # minimal
   "libcxxabi;libcxx;libunwind"
   "libcxxabi;libcxx"
+  "libcxxabi;libcxx"  # minimal
 )
 
 for i in "${!variants[@]}" ; do
   b="${variants[$i]}"
   a="${flags[$i]}"
 
-  COMMON_FLAGS="$a -D_GNU_SOURCE -flto=auto"
+  COMMON_FLAGS="$a -D_GNU_SOURCE"
   CMAKE_FLAGS="${cmake_flags[$i]}"
   RUNTIMES="${runtimes[$i]}"
 
@@ -89,15 +103,13 @@ for i in "${!variants[@]}" ; do
     -DLIBCXXABI_ENABLE_SHARED=OFF                                             \
     -DLIBCXXABI_ENABLE_STATIC=ON                                              \
     -DLIBCXXABI_USE_COMPILER_RT=ON                                            \
-    -DLIBCXXABI_SHARED_OUTPUT_NAME="c++abi-shared"                            \
+    \
     -DLIBCXX_ABI_UNSTABLE=ON                                                  \
     -DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON                        \
     -DLIBCXX_ENABLE_FILESYSTEM=OFF                                            \
     -DLIBCXX_ENABLE_SHARED=OFF                                                \
     -DLIBCXX_ENABLE_STATIC=ON                                                 \
-    -DLIBCXX_ENABLE_LOCALIZATION=ON                                           \
     -DLIBCXX_INCLUDE_BENCHMARKS=OFF                                           \
-    -DLIBCXX_SHARED_OUTPUT_NAME="c++-shared"                                  \
     -DLIBCXX_INCLUDE_TESTS=OFF                                                \
     -DLIBUNWIND_ENABLE_ASSERTIONS=OFF                                         \
     -DLIBUNWIND_ENABLE_SHARED=OFF                                             \
@@ -105,7 +117,6 @@ for i in "${!variants[@]}" ; do
     -DLIBUNWIND_IS_BAREMETAL=ON                                               \
     -DLIBUNWIND_REMEMBER_HEAP_ALLOC=ON                                        \
     -DLIBUNWIND_USE_COMPILER_RT=ON                                            \
-    -DLIBUNWIND_SHARED_OUTPUT_NAME="unwind-shared"                            \
     -DRUNTIME_VARIANT_NAME="${b}"                                              \
     -DLIBCXXABI_ENABLE_THREADS=OFF                                            \
     -DLIBCXX_ENABLE_MONOTONIC_CLOCK=OFF                                       \

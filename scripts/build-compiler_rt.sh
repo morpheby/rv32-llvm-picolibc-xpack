@@ -25,19 +25,19 @@ mkdir -p "${DIST_DIR}/dist"
 
 variants=(
   rv32imafc-zicsr-zifencei-xwchc_ilp32f_exn_rtti
-  rv32imafc-zicsr-zifencei-xwchc_ilp32f_exn
   rv32imafc-zicsr-zifencei-xwchc_ilp32f
+  rv32imafc-zicsr-zifencei-xwchc_ilp32f_minimal
   rv32imac-zicsr-zifencei-xwchc_ilp32_exn_rtti
-  rv32imac-zicsr-zifencei-xwchc_ilp32_exn
   rv32imac-zicsr-zifencei-xwchc_ilp32
+  rv32imac-zicsr-zifencei-xwchc_ilp32_minimal
 )
 
 flags=(
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto"
-  "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto -fno-rtti"
+  "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto -fno-exceptions -fno-rtti"
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto -fno-exceptions -fno-rtti"
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto"
-  "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto -fno-rtti"
+  "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto -fno-exceptions -fno-rtti"
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto -fno-exceptions -fno-rtti"
 )
 

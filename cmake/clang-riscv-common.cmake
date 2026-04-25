@@ -132,6 +132,7 @@ set(COMMON_FLAGS
     -fvirtual-function-elimination
     -fwhole-program-vtables
     ${_EXN_RTTI_FLAGS}
+    ${_CH32_EXTRA_FLAGS}
     -fcolor-diagnostics
     -D_PICOLIBC_PRINTF='f'
     -D_PICOLIBC_SCANF='m'
