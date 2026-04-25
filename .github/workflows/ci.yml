@@ -149,7 +149,7 @@ jobs:
       #     cmake/   ← CMake toolchain files
       - name: Package sysroot
         run: |
-          VERSION=$(jq -r .version package.json)
+          VERSION=${LLVM_VERSION}-${PICOLIBC_TAG#v}
           OUTDIR="$GITHUB_WORKSPACE" \
             VERSION="$VERSION" \
             bash scripts/package-dist.sh
