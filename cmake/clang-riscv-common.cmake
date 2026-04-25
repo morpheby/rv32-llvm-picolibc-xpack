@@ -173,7 +173,8 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT
 ${_CH32_LINKER_LIBS} \
 -Wl,--defsym=vfprintf=__f_vfprintf \
 -Wl,--defsym=vfscanf=__m_vfscanf \
--nostartfiles")
+-nostartfiles \
+--rtlib=compiler-rt")
 
 # TODO: Those are some things Espressif uses for optimization. Consider the impact later.
     # -mllvm -inline-threshold=500
