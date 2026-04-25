@@ -52,22 +52,28 @@ cmake_flags=(
   "-DLIBCXXABI_ENABLE_EXCEPTIONS=NO -DLIBCXX_ENABLE_EXCEPTIONS=NO -DLIBCXXABI_ENABLE_STATIC_UNWINDER=NO -DLIBCXXABI_ENABLE_RTTI=NO -DLIBCXX_ENABLE_RTTI=NO -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXXABI_USE_LLVM_UNWINDER=OFF -DLIBCXX_ENABLE_LOCALIZATION=OFF -DLIBCXX_ENABLE_WIDE_CHARACTERS=OFF"
 )
 
+# Compile flags per variant.  The _minimal variants use the same architecture
+# and exception/RTTI flags as their base counterparts; their distinction is
+# in cmake_flags (LIBCXX_ENABLE_LOCALIZATION=OFF / LIBCXX_ENABLE_WIDE_CHARACTERS=OFF)
+# and in how picolibc was built (-Dmb-capable=false).
 flags=(
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT}"
   "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
-  "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
+  "-march=rv32imafc_zicsr_zifencei_xwchc -mabi=ilp32f -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"  # minimal
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT}"
   "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
-  "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"
+  "-march=rv32imac_zicsr_zifencei_xwchc -mabi=ilp32 -flto=auto --sysroot=${SYSROOT} -fno-exceptions -fno-rtti"  # minimal
 )
 
+# Which runtimes to build per variant.  Variants with exceptions need libunwind;
+# no-exn and minimal variants only need libcxxabi and libcxx.
 runtimes=(
   "libcxxabi;libcxx;libunwind"
   "libcxxabi;libcxx"
-  "libcxxabi;libcxx"
+  "libcxxabi;libcxx"  # minimal
   "libcxxabi;libcxx;libunwind"
   "libcxxabi;libcxx"
-  "libcxxabi;libcxx"
+  "libcxxabi;libcxx"  # minimal
 )
 
 for i in "${!variants[@]}" ; do
