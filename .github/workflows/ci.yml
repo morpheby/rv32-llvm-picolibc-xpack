@@ -56,7 +56,7 @@ jobs:
             workspace/llvm-project
           cd workspace/llvm-project
           git sparse-checkout set \
-            runtimes compiler-rt libcxx libcxxabi libunwind cmake llvm/cmake libc
+            runtimes compiler-rt libcxx libcxxabi libunwind cmake llvm/cmake llvm/utils/llvm-lit libc
 
       - name: Clone picolibc (${{ env.PICOLIBC_TAG }})
         run: |
