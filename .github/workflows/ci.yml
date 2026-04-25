@@ -309,8 +309,7 @@ jobs:
 
       # ── Semihost builds (C) — all useful arch families ────────────────────
       # Builds a fully linked semihosted executable: startup and I/O are
-      # provided by picolibc's crt0-semihost / libsemihost; no ch32_hal
-      # is required.
+      # provided by picolibc's crt0-semihost / libsemihost
       - name: Build semihost C — CH32V (rv32imafc / ilp32f, no-exn/no-rtti)
         run: |
           cmake -G Ninja \
