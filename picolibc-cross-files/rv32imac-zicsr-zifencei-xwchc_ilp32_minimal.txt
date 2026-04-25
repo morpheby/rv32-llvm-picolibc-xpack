@@ -17,7 +17,12 @@ cpu = 'riscv'
 endian = 'little'
 
 [properties]
-#libgcc ='-lclang_rt.builtins'
+# Use compiler-rt builtins instead of libgcc (renamed 'libgcc' → 'librt' in
+# picolibc 1.8.11; the old name is still accepted for backward compat).
+# This controls the GROUP() directive in the installed picolibc.ld so that it
+# references -lclang_rt.builtins rather than -lgcc, which does not exist in
+# this LLVM-only sysroot.
+librt = '-lclang_rt.builtins'
 separate_boot_flash = true
 c_args = ['-Werror=double-promotion']
 c_link_args = []
