@@ -58,9 +58,10 @@ jobs:
             "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           TAG_MESSAGE="rv32-llvm-picolibc-xpack-${RELEASE_VERSION}
 
-LLVM:      llvmorg-${LLVM_VER}
-picolibc:  ${PICOLIBC_VER}
-Release:   ${RELEASE_NUM}"
+          LLVM:      llvmorg-${LLVM_VER}
+          picolibc:  ${PICOLIBC_VER}
+          Release:   ${RELEASE_NUM}"
+          
           git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
           git push origin "${TAG_NAME}"
           echo "Created and pushed tag: ${TAG_NAME}"
