@@ -9,7 +9,7 @@ add_definitions(
 add_executable(semihost_ch32v303 main.c)
 
 target_link_libraries(semihost_ch32v303 PRIVATE
-    crt0-semihost 
+    crt0-semihost
     semihost
 )
 

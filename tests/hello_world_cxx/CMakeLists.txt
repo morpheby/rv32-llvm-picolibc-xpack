@@ -6,13 +6,10 @@ add_definitions(
     -D_PICOLIBC_SCANF='m'
 )
 
-add_compile_options(
-    -lc++
-)
-
 add_executable(hello_world_cxx main.cpp os.c)
 
 target_link_libraries(hello_world_cxx PRIVATE
+    c++
     crt0
 )
 

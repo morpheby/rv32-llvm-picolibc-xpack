@@ -10,6 +10,6 @@ int main(void) {
 
     result = UINT32_C(42);
     printf("Hello, world %d\n", result);
-    
+
     return 0;
 }
