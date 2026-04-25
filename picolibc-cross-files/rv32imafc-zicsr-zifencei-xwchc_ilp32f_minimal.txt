@@ -23,7 +23,7 @@ endian = 'little'
 # references -lclang_rt.builtins rather than -lgcc, which does not exist in
 # this LLVM-only sysroot.
 librt = '-lclang_rt.builtins'
-separate_boot_flash = true
+separate_boot_flash = false
 c_args = ['-Werror=double-promotion']
 c_link_args = []
 cpp_link_args = []
