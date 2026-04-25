@@ -1,0 +1,61 @@
+{
+  "name": "@morpheby/rv32-llvm-picolibc",
+  "version": "21.1.8-1.8.11-1.1",
+  "description": "Binary xpack: RISC-V LLVM sysroot (compiler-rt + picolibc + libcxx) for CH32V targets with xwchc extension",
+  "main": "",
+  "scripts": {
+    "postversion": "git push origin --all && git push origin --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/morpheby/rv32-llvm-picolibc-xpack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/morpheby/rv32-llvm-picolibc-xpack/issues"
+  },
+  "homepage": "https://github.com/morpheby/rv32-llvm-picolibc-xpack",
+  "keywords": [
+    "xpack",
+    "riscv",
+    "llvm",
+    "clang",
+    "picolibc",
+    "compiler-rt",
+    "libcxx",
+    "sysroot",
+    "embedded",
+    "ch32v",
+    "xwchc"
+  ],
+  "author": "morpheby",
+  "license": "Apache-2.0",
+  "xpack": {
+    "minimumXpmRequired": "0.20.5",
+    "binaries": {
+      "destination": "./.content",
+      "baseUrl": "https://github.com/morpheby/rv32-llvm-picolibc-xpack/releases/download/v21.1.8-1.8.11-1",
+      "skip": 1,
+      "platforms": {
+        "darwin-arm64": {
+          "fileName": "rv32-llvm-picolibc-21.1.8-1.8.11-1.tar.gz",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "darwin-x64": {
+          "fileName": "rv32-llvm-picolibc-21.1.8-1.8.11-1.tar.gz",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "linux-arm64": {
+          "fileName": "rv32-llvm-picolibc-21.1.8-1.8.11-1.tar.gz",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "linux-x64": {
+          "fileName": "rv32-llvm-picolibc-21.1.8-1.8.11-1.tar.gz",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  },
+  "engines": {
+    "node": ">=20.0"
+  }
+}

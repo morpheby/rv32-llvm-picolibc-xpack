@@ -19,7 +19,7 @@ compiler flags (`-march`, `-mabi`, `-fno-exceptions`, `-fno-rtti`):
 | `rv32imac-zicsr-zifencei-xwchc_ilp32_exn_rtti` | rv32imac_…_xwchc | ilp32 | ✓ | ✓ |
 | `rv32imac-zicsr-zifencei-xwchc_ilp32` | rv32imac_…_xwchc | ilp32 | — | — |
 
-## Installation
+## Install manually
 
 Download latest relase, unarchive and use with `--sysroot=PATH_TO_UNARCHIVED_DIR/dist`.
 
@@ -28,6 +28,25 @@ If using cmake, you may find useful ready-made cmake files in `cmake/` directory
 ```sh
 cmake -DCMAKE_TOOLCHAIN_FILE=rv32-llvm-picolibc/cmake/clang-riscv-ch32v.cmake
 ```
+
+## Install with xpm
+
+```sh
+npx xpm install morpheby/rv32-llvm-picolibc#release/v21.1.8-1.8.11
+```
+
+or add to `package.json`:
+
+```json
+"xpack": {
+  "devDependencies": {
+    "@morpheby/rv32-llvm-picolibc": "github:morpheby/rv32-llvm-picolibc-xpack#release/v21.1.8-1.8.11"
+  }
+}
+```
+
+Note that the `main` branch does not provide useful `package.json`, only template. All specific releases
+are done in `release/` branches.
 
 ## License and acknowledgments
 
