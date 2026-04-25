@@ -9,7 +9,8 @@ add_definitions(
 add_executable(semihost_cxx main.cpp)
 
 target_link_libraries(semihost_cxx PRIVATE
-    crt0-semihost 
+    crt0-semihost
+    c++
     semihost
 )
 

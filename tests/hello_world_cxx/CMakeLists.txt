@@ -10,6 +10,7 @@ add_executable(hello_world_cxx main.cpp os.c)
 
 target_link_libraries(hello_world_cxx PRIVATE
     crt0
+    c++
 )
 
 target_link_options(hello_world_cxx PRIVATE
