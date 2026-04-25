@@ -27,27 +27,23 @@ diff --git a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake b/compiler-rt/cmake
 index 03db38fa4..0cf69504b 100644
 --- a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
 +++ b/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
-@@ -119,10 +119,12 @@ macro(test_target_arch arch def)
+@@ -119,10 +119,10 @@ macro(test_target_arch arch def)
    if(NOT DEFINED CAN_TARGET_${arch})
      if(NOT HAS_${arch}_DEF)
        set(CAN_TARGET_${arch} FALSE)
-+      message("${arch} is not supported because ${def} is not defined")
      elseif(TEST_COMPILE_ONLY)
        try_compile_only(CAN_TARGET_${arch}
                         SOURCE "#include <limits.h>\nint foo(int x, int y) { return x + y; }\n"
                         FLAGS ${TARGET_${arch}_CFLAGS})
-+      message("${arch} is ${CAN_TARGET_${arch}} (compile only)")
      else()
        set(FLAG_NO_EXCEPTIONS "")
        if(COMPILER_RT_HAS_FNO_EXCEPTIONS_FLAG)
-@@ -134,8 +136,10 @@ macro(test_target_arch arch def)
+@@ -134,8 +134,8 @@ macro(test_target_arch arch def)
                    COMPILE_DEFINITIONS "${TARGET_${arch}_CFLAGS} ${FLAG_NO_EXCEPTIONS}"
                    OUTPUT_VARIABLE TARGET_${arch}_OUTPUT)
        set(CMAKE_EXE_LINKER_FLAGS ${SAVED_CMAKE_EXE_LINKER_FLAGS})
-+      message("${arch} no except")
      endif()
    endif()
-+  message("${arch} is ${CAN_TARGET_${arch}}")
    if(${CAN_TARGET_${arch}})
      list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
    elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" STREQUAL "${arch}" AND
@@ -65,11 +61,10 @@ diff --git a/compiler-rt/cmake/base-config-ix.cmake b/compiler-rt/cmake/base-con
 index d92bc0e71..018f59c70 100644
 --- a/compiler-rt/cmake/base-config-ix.cmake
 +++ b/compiler-rt/cmake/base-config-ix.cmake
-@@ -210,6 +210,7 @@ macro(test_targets)
+@@ -210,6 +210,6 @@ macro(test_targets)
      detect_target_arch()
      set(COMPILER_RT_OS_SUFFIX "-android")
    elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
-+    message(STATUS "Testing default target architecture ${COMPILER_RT_DEFAULT_TARGET_ARCH}")
      if(COMPILER_RT_DEFAULT_TARGET_ONLY)
        add_default_target_arch(${COMPILER_RT_DEFAULT_TARGET_ARCH})
      elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "i[2-6]86|x86|amd64")
@@ -77,10 +72,13 @@ diff --git a/libc/cmake/modules/LLVMLibCArchitectures.cmake b/libc/cmake/modules
 index c94a407d9..0fd749eaf 100644
 --- a/libc/cmake/modules/LLVMLibCArchitectures.cmake
 +++ b/libc/cmake/modules/LLVMLibCArchitectures.cmake
-@@ -94,6 +94,7 @@ if(NOT libc_compiler_target_info)
+@@ -94,6 +94,10 @@ if(NOT libc_compiler_target_info)
  endif()
  string(STRIP ${libc_compiler_target_info} libc_compiler_target_info)
  string(SUBSTRING ${libc_compiler_target_info} 8 -1 libc_compiler_triple)
++# The compiler detection query produces a triple that may differ from the
++# canonical bare-metal target (e.g. missing sub-extensions).  Override it
++# so that libc's architecture detection succeeds for RISC-V 32-bit targets.
 +set(libc_compiler_triple "riscv32-unknown-none-elf")
  get_arch_and_system_from_triple(${libc_compiler_triple}
                                  compiler_arch compiler_sys)

@@ -45,7 +45,6 @@ for s in "${PICOLIBC_CROSS_FILES_DIR}"/*.txt ; do
     -Dmb-capable=${MB_CAPABLE}    \
     -Dmultilib=false              \
     --buildtype=minsize           \
-    --optimization=s              \
     --reconfigure
 
   ninja -C "build-${b}"

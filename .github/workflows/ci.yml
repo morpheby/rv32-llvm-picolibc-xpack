@@ -47,12 +47,16 @@ jobs:
       - name: Install build tools
         run: sudo apt-get install -y cmake ninja-build meson python3
 
-      # Clone source trees.  Shallow clones keep checkout time reasonable.
+      # Clone source trees using sparse checkout to fetch only the directories
+      # needed for the build, keeping checkout time and disk usage minimal.
       - name: Clone llvm-project (${{ env.LLVM_TAG }})
         run: |
-          git clone --depth=1 --branch ${{ env.LLVM_TAG }} \
+          git clone --depth=1 --branch ${{ env.LLVM_TAG }} --filter=blob:none --sparse \
             https://github.com/llvm/llvm-project.git \
             workspace/llvm-project
+          cd workspace/llvm-project
+          git sparse-checkout set \
+            runtimes compiler-rt libcxx libcxxabi libunwind cmake llvm/cmake libc
 
       - name: Clone picolibc (${{ env.PICOLIBC_TAG }})
         run: |
@@ -184,3 +188,20 @@ jobs:
             -S tests/hello_world \
             -DCMAKE_TOOLCHAIN_FILE=/tmp/rv32-sysroot/cmake/clang-riscv-ch32v20x-exn-rtti.cmake
           cmake --build build/test-ch32v20x-exn-rtti
+
+      # ── Compile hello world against the minimal (no-locale) toolchain variants ─
+      - name: Build hello world — CH32V (rv32imafc / ilp32f, minimal/no-locale)
+        run: |
+          cmake -G Ninja \
+            -B build/test-ch32v-minimal \
+            -S tests/hello_world \
+            -DCMAKE_TOOLCHAIN_FILE=/tmp/rv32-sysroot/cmake/clang-riscv-ch32v-minimal.cmake
+          cmake --build build/test-ch32v-minimal
+
+      - name: Build hello world — CH32V20x (rv32imac / ilp32, minimal/no-locale)
+        run: |
+          cmake -G Ninja \
+            -B build/test-ch32v20x-minimal \
+            -S tests/hello_world \
+            -DCMAKE_TOOLCHAIN_FILE=/tmp/rv32-sysroot/cmake/clang-riscv-ch32v20x-minimal.cmake
+          cmake --build build/test-ch32v20x-minimal

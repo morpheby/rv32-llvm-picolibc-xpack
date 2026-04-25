@@ -1,6 +1,6 @@
 [binaries]
 c = ['clang', '-target', 'riscv32-unknown-none-elf', '-march=rv32imafc_zicsr_zifencei_xwchc', '-mabi=ilp32f', '-fno-exceptions', '-fno-rtti', '-nostdlib', '-flto=auto']
-cpp = ['clang++', '-target', 'riscv32-unknown-none-elf', '-march=rv32imafc_zicsr_zifencei_xwchc', '-mabi=ilp32f', '-fno-exceptions', '-fno-rtti', '-nostdlib', '-stdlib=libstdc++', '-flto=auto']
+cpp = ['clang++', '-target', 'riscv32-unknown-none-elf', '-march=rv32imafc_zicsr_zifencei_xwchc', '-mabi=ilp32f', '-fno-exceptions', '-fno-rtti', '-nostdlib', '-flto=auto']
 c_ld = 'lld'
 cpp_ld = 'lld'
 ar = 'llvm-ar'
