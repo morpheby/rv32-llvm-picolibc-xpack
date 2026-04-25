@@ -36,36 +36,24 @@ jobs:
           PICOLIBC_VER="${REST##*-}"
           LLVM_VER="${REST%-*}"
           LLVM_MAJOR="${LLVM_VER%%.*}"
-          LLVM_MINOR="${LLVM_VER#*.}"
-          LLVM_MINOR="${LLVM_MINOR%%.*}"
           LLVM_TAG="llvmorg-${LLVM_VER}"
 
           # Verify the derived LLVM tag exists in the upstream repo.
-          # If not (e.g. a future version was tagged in this repo before LLVM
-          # released it), find the highest available patch for the same major.minor.
+          # A missing tag most likely means the repo was tagged for an LLVM
+          # version that hasn't been released yet; fail loudly rather than
+          # silently building the wrong version.
           if ! git ls-remote --tags --exit-code \
               https://github.com/llvm/llvm-project.git \
               "refs/tags/${LLVM_TAG}" > /dev/null 2>&1; then
-            echo "WARNING: ${LLVM_TAG} not found upstream; searching for latest ${LLVM_MAJOR}.${LLVM_MINOR}.x" >&2
-            LLVM_TAG="$(git ls-remote --tags \
-              https://github.com/llvm/llvm-project.git \
-              "refs/tags/llvmorg-${LLVM_MAJOR}.${LLVM_MINOR}.*" \
-              | awk '{print $2}' \
-              | grep -v '\^{}' \
-              | sed 's|refs/tags/||' \
-              | grep -E "^llvmorg-${LLVM_MAJOR}\.${LLVM_MINOR}\.[0-9]+$" \
-              | sort -t. -k3 -n \
-              | tail -1)"
-            if [[ -z "${LLVM_TAG}" ]]; then
-              echo "ERROR: No upstream llvmorg-${LLVM_MAJOR}.${LLVM_MINOR}.x tag found." >&2
-              exit 1
-            fi
-            echo "Using upstream tag: ${LLVM_TAG}" >&2
+            echo "ERROR: ${LLVM_TAG} does not exist in upstream llvm/llvm-project." >&2
+            echo "The latest repo tag references an unreleased LLVM version." >&2
+            echo "Please update the repo tag to point at a released LLVM version." >&2
+            exit 1
           fi
 
-          echo "llvm_tag=${LLVM_TAG}"          >> "$GITHUB_OUTPUT"
-          echo "llvm_version=${LLVM_MAJOR}"    >> "$GITHUB_OUTPUT"
-          echo "picolibc_tag=${PICOLIBC_VER}"  >> "$GITHUB_OUTPUT"
+          echo "llvm_tag=${LLVM_TAG}"        >> "$GITHUB_OUTPUT"
+          echo "llvm_version=${LLVM_MAJOR}"  >> "$GITHUB_OUTPUT"
+          echo "picolibc_tag=${PICOLIBC_VER}" >> "$GITHUB_OUTPUT"
 
   build-sysroot:
     name: Build sysroot
