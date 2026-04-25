@@ -56,11 +56,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin \
             "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          TAG_MESSAGE="rv32-llvm-picolibc-xpack-${RELEASE_VERSION}
-
-LLVM:      llvmorg-${LLVM_VER}
-picolibc:  ${PICOLIBC_VER}
-Release:   ${RELEASE_NUM}"
+          TAG_MESSAGE=$(printf '%s\n\nLLVM:      llvmorg-%s\npicolibc:  %s\nRelease:   %s' \
+            "rv32-llvm-picolibc-xpack-${RELEASE_VERSION}" \
+            "${LLVM_VER}" \
+            "${PICOLIBC_VER}" \
+            "${RELEASE_NUM}")
           git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
           git push origin "${TAG_NAME}"
           echo "Created and pushed tag: ${TAG_NAME}"
