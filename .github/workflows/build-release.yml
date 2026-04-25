@@ -1,9 +1,6 @@
 name: Build and Release
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -20,25 +17,55 @@ jobs:
     steps:
       - name: Checkout xpack repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract versions from tag
+      - name: Compute release number and create tag
         id: version
         run: |
-          # Tag format: v{llvm_ver}-{picolibc_ver}-{release_num}
-          # e.g. v21.1.8-1.8.11-1  →  LLVM=21.1.8  picolibc=1.8.11  release=1
-          RAW="${GITHUB_REF_NAME#v}"
-          RELEASE_NUM="${RAW##*-}"
-          REST="${RAW%-*}"
-          PICOLIBC_VER="${REST##*-}"
-          LLVM_VER="${REST%-*}"
-          LLVM_MAJOR="${LLVM_VER%%.*}"
+          BRANCH="${GITHUB_REF_NAME}"
+          if [[ ! "${BRANCH}" =~ ^release/v ]]; then
+            echo "ERROR: This workflow must be run on a release/v<llvm>-<picolibc> branch." >&2
+            exit 1
+          fi
 
-          echo "RELEASE_VERSION=${RAW}"          >> "$GITHUB_ENV"
-          echo "XPACK_VERSION=${RAW}.1"          >> "$GITHUB_ENV"
-          echo "TARNAME=rv32-llvm-picolibc-${RAW}" >> "$GITHUB_ENV"
-          echo "LLVM_TAG=llvmorg-${LLVM_VER}"   >> "$GITHUB_ENV"
-          echo "LLVM_VERSION=${LLVM_MAJOR}"      >> "$GITHUB_ENV"
-          echo "PICOLIBC_TAG=${PICOLIBC_VER}"    >> "$GITHUB_ENV"
+          # Count previously completed runs of this workflow on this branch to
+          # determine the next release number.
+          COMPLETED=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/build-release.yml/runs?branch=${BRANCH}&status=completed&per_page=1" \
+            --jq '.total_count')
+          RELEASE_NUM=$((COMPLETED + 1))
+
+          # Branch format: release/v{llvm_ver}-{picolibc_ver}
+          RAW="${BRANCH#release/v}"
+          PICOLIBC_VER="${RAW##*-}"
+          LLVM_VER="${RAW%-*}"
+          LLVM_MAJOR="${LLVM_VER%%.*}"
+          RELEASE_VERSION="${LLVM_VER}-${PICOLIBC_VER}-${RELEASE_NUM}"
+          TAG_NAME="v${RELEASE_VERSION}"
+
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "$GITHUB_ENV"
+          echo "XPACK_VERSION=${RELEASE_VERSION}.1"  >> "$GITHUB_ENV"
+          echo "TARNAME=rv32-llvm-picolibc-${RELEASE_VERSION}" >> "$GITHUB_ENV"
+          echo "LLVM_TAG=llvmorg-${LLVM_VER}"        >> "$GITHUB_ENV"
+          echo "LLVM_VERSION=${LLVM_MAJOR}"           >> "$GITHUB_ENV"
+          echo "PICOLIBC_TAG=${PICOLIBC_VER}"         >> "$GITHUB_ENV"
+
+          # Create and push an annotated tag as the first release step.
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          TAG_MESSAGE="rv32-llvm-picolibc-xpack-${RELEASE_VERSION}
+
+LLVM:      llvmorg-${LLVM_VER}
+picolibc:  ${PICOLIBC_VER}
+Release:   ${RELEASE_NUM}"
+          git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+          git push origin "${TAG_NAME}"
+          echo "Created and pushed tag: ${TAG_NAME}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Install LLVM from apt.llvm.org ────────────────────────────────────
       - name: Install LLVM ${{ env.LLVM_VERSION }}
@@ -182,7 +209,7 @@ jobs:
             "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add package.json
           git commit -m "chore: update package.json for v${RELEASE_VERSION} [skip ci]"
-          git push origin HEAD:main
+          git push origin HEAD:"${GITHUB_REF_NAME}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -190,6 +217,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v${{ env.RELEASE_VERSION }}"
           name: "rv32-llvm-picolibc ${{ env.RELEASE_VERSION }}"
           body: |
             ## rv32-llvm-picolibc ${{ env.RELEASE_VERSION }}

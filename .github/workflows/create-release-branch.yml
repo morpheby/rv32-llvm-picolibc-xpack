@@ -1,0 +1,56 @@
+name: Create Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      llvm_ver:
+        description: 'LLVM version (e.g. 21.1.8)'
+        required: true
+        type: string
+      picolibc_ver:
+        description: 'picolibc version (e.g. 1.8.11)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Create release branch and update version references
+        run: |
+          BRANCH="release/v${{ inputs.llvm_ver }}-${{ inputs.picolibc_ver }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git checkout -b "${BRANCH}"
+          # Use release_num=1 as placeholder; the actual number is computed
+          # automatically during the Build and Release workflow.
+          bash scripts/update-version.sh \
+            "${{ inputs.llvm_ver }}" \
+            "${{ inputs.picolibc_ver }}" \
+            "1"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No version changes detected."
+          else
+            git commit -m "chore: set version to v${{ inputs.llvm_ver }}-${{ inputs.picolibc_ver }} [skip ci]"
+          fi
+          git push origin "${BRANCH}"
+          echo "Release branch created: ${BRANCH}"
+          echo "Run the 'Build and Release' workflow on this branch to publish."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
