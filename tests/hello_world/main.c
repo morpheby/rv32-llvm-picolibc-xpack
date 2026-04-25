@@ -11,10 +11,13 @@
  */
 
 #include <stdint.h>
-
-volatile uint32_t result;
+#include <stdio.h>
 
 int main(void) {
+    uint32_t result;
+
     result = UINT32_C(42);
+    printf("Hello, world %d\n", result);
+    
     return 0;
 }
