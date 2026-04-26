@@ -37,6 +37,7 @@ jobs:
           git remote set-url origin \
             "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git checkout -b "${BRANCH}"
+          git push origin "${BRANCH}"
           echo "Release branch created: ${BRANCH}"
           echo "Run the 'Build and Release' workflow on this branch to publish."
         env:
