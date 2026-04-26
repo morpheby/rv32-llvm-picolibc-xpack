@@ -2,7 +2,7 @@
 
 LLVM sysroot build providing a RISC-V bare-metal build from:
 
-- **LLVM 21**
+- **LLVM 22**
 - **picolibc 1.8.11**
 
 Targets CH32V series MCUs with the `xwchc` vendor extension.
@@ -32,7 +32,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=rv32-llvm-picolibc/cmake/clang-riscv-ch32v.cmake
 ## Install with xpm
 
 ```sh
-npx xpm install morpheby/rv32-llvm-picolibc#release/v21.1.8-1.8.11
+npx xpm install morpheby/rv32-llvm-picolibc#release/v22.1.4-1.8.11
 ```
 
 or add to `package.json`:
@@ -40,7 +40,7 @@ or add to `package.json`:
 ```json
 "xpack": {
   "devDependencies": {
-    "@morpheby/rv32-llvm-picolibc": "github:morpheby/rv32-llvm-picolibc-xpack#release/v21.1.8-1.8.11"
+    "@morpheby/rv32-llvm-picolibc": "github:morpheby/rv32-llvm-picolibc-xpack#release/v22.1.4-1.8.11"
   }
 }
 ```
@@ -88,7 +88,7 @@ git clone --depth=1 --branch main https://github.com/picolibc/picolibc.git  work
 
 # 2. Apply patches (if any)
 cd workspace/llvm-project
-git apply ../../patches/llvmorg-21.1.8.patch
+git apply ../../patches/llvmorg-22.1.4.patch
 cd ../..
 
 # 3. Set up environment

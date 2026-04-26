@@ -110,15 +110,25 @@ set(COMMON_FLAGS
 string(JOIN " " COMMON_FLAGS_STR ${COMMON_FLAGS})
 
 set(CMAKE_C_FLAGS_INIT   "-std=gnu23 ${COMMON_FLAGS_STR}")
-set(CMAKE_CXX_FLAGS_INIT "${COMMON_FLAGS_STR} -std=gnu++20 -fno-threadsafe-statics -fno-use-cxa-atexit -fpermissive")
+set(CMAKE_CXX_FLAGS_INIT "                                  \
+    ${COMMON_FLAGS_STR}                                     \
+    -std=gnu++20                                            \
+    -fno-threadsafe-statics                                 \
+    -fno-use-cxa-atexit                                     \
+    -fpermissive                                            \
+    -stdlib++-isystem${LLVM_TOOLCHAIN}/include/c++/v1       \
+")
 set(CMAKE_ASM_FLAGS_INIT "${ARCH_FLAGS_STR} --target=riscv32-unknown-none-elf -x assembler-with-cpp")
 
-set(CMAKE_EXE_LINKER_FLAGS_INIT
-    "--sysroot=${LLVM_TOOLCHAIN} ${ARCH_FLAGS_STR} \
-    -Wl,--gc-sections \
-    -Wl,--undefined=__end \
-    -nostartfiles \
-    --rtlib=compiler-rt")
+set(CMAKE_EXE_LINKER_FLAGS_INIT "                           \
+    --sysroot=${LLVM_TOOLCHAIN}                             \
+    ${ARCH_FLAGS_STR}                                       \
+    -Wl,--gc-sections                                       \
+    -Wl,--undefined=__end                                   \
+    -nostartfiles                                           \
+    --stdlib=libc++                                         \
+    --rtlib=compiler-rt                                     \
+")
 
 # TODO: Those are some things Espressif uses for optimization. Consider the impact later.
     # -mllvm -inline-threshold=500

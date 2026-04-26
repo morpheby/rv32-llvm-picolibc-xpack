@@ -97,16 +97,15 @@ for i in "${!variants[@]}" ; do
     -DCMAKE_BUILD_TYPE=Release                                                \
     -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY                            \
     -DLLVM_HOST_TRIPLE=riscv32-unknown-none-elf                               \
-    -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}"                                 \
+    -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}"                                \
     -DLLVM_ENABLE_RUNTIMES="${RUNTIMES}"                                      \
     -DLIBCXXABI_BAREMETAL=ON                                                  \
     -DLIBCXXABI_ENABLE_ASSERTIONS=OFF                                         \
     -DLIBCXXABI_ENABLE_SHARED=OFF                                             \
     -DLIBCXXABI_ENABLE_STATIC=ON                                              \
     -DLIBCXXABI_USE_COMPILER_RT=ON                                            \
-    \
     -DLIBCXX_ABI_UNSTABLE=ON                                                  \
-    -DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON                        \
+    -DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON                         \
     -DLIBCXX_ENABLE_FILESYSTEM=OFF                                            \
     -DLIBCXX_ENABLE_SHARED=OFF                                                \
     -DLIBCXX_ENABLE_STATIC=ON                                                 \
@@ -118,14 +117,16 @@ for i in "${!variants[@]}" ; do
     -DLIBUNWIND_IS_BAREMETAL=ON                                               \
     -DLIBUNWIND_REMEMBER_HEAP_ALLOC=ON                                        \
     -DLIBUNWIND_USE_COMPILER_RT=ON                                            \
-    -DRUNTIME_VARIANT_NAME="${b}"                                              \
+    -DLIBUNWIND_TARGET_TRIPLE=riscv32-unknown-none-elf                        \
+    -DRUNTIME_VARIANT_NAME="${b}"                                             \
     -DLIBCXXABI_ENABLE_THREADS=OFF                                            \
     -DLIBCXX_ENABLE_MONOTONIC_CLOCK=OFF                                       \
     -DLIBCXX_ENABLE_RANDOM_DEVICE=OFF                                         \
     -DLIBCXX_ENABLE_THREADS=OFF                                               \
     -DLIBCXX_ENABLE_WIDE_CHARACTERS=OFF                                       \
+    -DLIBCXX_INSTALL_INCLUDE_TARGET_DIR=include-target                        \
     -DLIBUNWIND_ENABLE_THREADS=OFF                                            \
-    -DRUNTIMES_USE_LIBC=system                                                \
+    -DRUNTIMES_USE_LIBC=picolibc                                              \
     -DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-none-elf                     \
     -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF                                  \
     -DLLVM_ENABLE_LTO=ON                                                      \
@@ -140,7 +141,13 @@ for i in "${!variants[@]}" ; do
 
   ninja -C "build-libcxx-${b}"
   DESTDIR="./dist" ninja -C "build-libcxx-${b}" install
-
-  mkdir -p "${DIST_DIR}/dist/${b}/"
-  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/." "${DIST_DIR}/dist/${b}/"
+  
+  mkdir -p "${DIST_DIR}/dist/${b}/include"
+  mkdir -p "${DIST_DIR}/dist/${b}/lib"
+  mkdir -p "${DIST_DIR}/dist/${b}/share"
+  mkdir -p "${DIST_DIR}/dist/include/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/include-target/." "${DIST_DIR}/dist/${b}/include/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/lib/." "${DIST_DIR}/dist/${b}/lib/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/share/." "${DIST_DIR}/dist/${b}/share/"
+  cp -R "build-libcxx-${b}/dist${INSTALL_PREFIX}/include/." "${DIST_DIR}/dist/include/"
 done
