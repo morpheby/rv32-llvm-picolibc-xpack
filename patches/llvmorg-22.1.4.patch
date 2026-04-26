@@ -1,0 +1,232 @@
+diff --git a/compiler-rt/CMakeLists.txt b/compiler-rt/CMakeLists.txt
+index 9f8e8334..4102344c 100644
+--- a/compiler-rt/CMakeLists.txt
++++ b/compiler-rt/CMakeLists.txt
+@@ -493,13 +493,13 @@ if(MSVC)
+     string(REGEX REPLACE "(^| )/Z[i7I]($| )" " /Z7 "
+            "${var_to_update}" "${${var_to_update}}")
+   endforeach()
+-elseif(APPLE)
+-  # On Apple platforms use full debug info (i.e. not `-gline-tables-only`)
+-  # for all build types so that the runtime can be debugged.
+-  if(NOT COMPILER_RT_HAS_G_FLAG)
+-    message(FATAL_ERROR "-g is not supported by host compiler")
+-  endif()
+-  list(APPEND SANITIZER_COMMON_CFLAGS -g)
++# elseif(APPLE)
++#   # On Apple platforms use full debug info (i.e. not `-gline-tables-only`)
++#   # for all build types so that the runtime can be debugged.
++#   if(NOT COMPILER_RT_HAS_G_FLAG)
++#     message(FATAL_ERROR "-g is not supported by host compiler")
++#   endif()
++#   list(APPEND SANITIZER_COMMON_CFLAGS -g)
+ elseif(COMPILER_RT_HAS_GLINE_TABLES_ONLY_FLAG AND NOT COMPILER_RT_DEBUG)
+   list(APPEND SANITIZER_COMMON_CFLAGS -gline-tables-only)
+ elseif(COMPILER_RT_HAS_G_FLAG)
+diff --git a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake b/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
+index 03db38fa..3aef7a1e 100644
+--- a/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
++++ b/compiler-rt/cmake/Modules/CompilerRTUtils.cmake
+@@ -378,8 +378,7 @@ macro(construct_compiler_rt_default_triple)
+     if (target_triple MATCHES "aix")
+       string(REGEX REPLACE "[0-9.]+$" "" target_triple "${target_triple}")
+     endif()
+-    set(COMPILER_RT_DEFAULT_TARGET_TRIPLE ${target_triple} CACHE STRING
+-          "Default triple for which compiler-rt runtimes will be built.")
++    set(COMPILER_RT_DEFAULT_TARGET_TRIPLE ${target_triple})
+   endif()
+ 
+   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+diff --git a/libc/cmake/modules/LLVMLibCArchitectures.cmake b/libc/cmake/modules/LLVMLibCArchitectures.cmake
+index c94a407d..275686da 100644
+--- a/libc/cmake/modules/LLVMLibCArchitectures.cmake
++++ b/libc/cmake/modules/LLVMLibCArchitectures.cmake
+@@ -94,6 +94,10 @@ if(NOT libc_compiler_target_info)
+ endif()
+ string(STRIP ${libc_compiler_target_info} libc_compiler_target_info)
+ string(SUBSTRING ${libc_compiler_target_info} 8 -1 libc_compiler_triple)
++# The compiler detection query produces a triple that may differ from the
++# canonical bare-metal target (e.g. missing sub-extensions).  Override it
++# so that libc's architecture detection succeeds for RISC-V 32-bit targets.
++set(libc_compiler_triple "riscv32-unknown-none-elf")
+ get_arch_and_system_from_triple(${libc_compiler_triple}
+                                 compiler_arch compiler_sys)
+ if(NOT compiler_arch)
+diff --git a/libc/src/__support/CPP/limits.h b/libc/src/__support/CPP/limits.h
+index cf4beb9c..093c713f 100644
+--- a/libc/src/__support/CPP/limits.h
++++ b/libc/src/__support/CPP/limits.h
+@@ -15,6 +15,21 @@
+ #include "src/__support/macros/attributes.h" // LIBC_INLINE
+ #include "src/__support/macros/config.h"
+ #include "src/__support/macros/properties/types.h" // LIBC_TYPES_HAS_INT128
++#include_next <limits.h>
++
++#ifndef __LONG_LONG_MAX__
++#define __LONG_LONG_MAX__ 9223372036854775807LL
++#endif
++
++/* Minimum and maximum values a `signed long long int' can hold.  */
++#undef LLONG_MIN
++#define LLONG_MIN (-LLONG_MAX - 1)
++#undef LLONG_MAX
++#define LLONG_MAX __LONG_LONG_MAX__
++
++/* Maximum value an `unsigned long long int' can hold.  (Minimum is 0).  */
++#undef ULLONG_MAX
++#define ULLONG_MAX (LLONG_MAX * 2ULL + 1)
+ 
+ namespace LIBC_NAMESPACE_DECL {
+ namespace cpp {
+diff --git a/libcxx/src/CMakeLists.txt b/libcxx/src/CMakeLists.txt
+index f59fe0e0..2dfccebb 100644
+--- a/libcxx/src/CMakeLists.txt
++++ b/libcxx/src/CMakeLists.txt
+@@ -172,39 +172,42 @@ split_list(LIBCXX_LINK_FLAGS)
+ 
+ include(FindLibcCommonUtils)
+ 
+-# Build the shared library.
+-add_library(cxx_shared SHARED ${LIBCXX_SOURCES} ${LIBCXX_HEADERS})
+-target_include_directories(cxx_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+-target_link_libraries(cxx_shared PUBLIC cxx-headers runtimes-libc-shared
+-                                  PRIVATE ${LIBCXX_LIBRARIES}
+-                                  PRIVATE llvm-libc-common-utilities)
+-set_target_properties(cxx_shared
+-  PROPERTIES
+-    EXCLUDE_FROM_ALL "$<IF:$<BOOL:${LIBCXX_ENABLE_SHARED}>,FALSE,TRUE>"
+-    COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
+-    LINK_FLAGS    "${LIBCXX_LINK_FLAGS}"
+-    OUTPUT_NAME   "${LIBCXX_SHARED_OUTPUT_NAME}"
+-    VERSION       "${LIBCXX_LIBRARY_VERSION}"
+-    SOVERSION     "${LIBCXX_ABI_VERSION}"
+-    DEFINE_SYMBOL ""
+-)
+-cxx_add_common_build_flags(cxx_shared)
+-
+-if(ZOS)
+-  add_custom_command(TARGET cxx_shared POST_BUILD
+-    COMMAND
+-      ${LIBCXX_SOURCE_DIR}/utils/zos_rename_dll_side_deck.sh
+-      $<TARGET_LINKER_FILE_NAME:cxx_shared> $<TARGET_FILE_NAME:cxx_shared> "${LIBCXX_DLL_NAME}"
+-    COMMENT "Rename dll name inside the side deck file"
+-    WORKING_DIRECTORY $<TARGET_FILE_DIR:cxx_shared>
++if (LIBCXX_ENABLE_SHARED)
++  # Build the shared library.
++  add_library(cxx_shared SHARED ${LIBCXX_SOURCES} ${LIBCXX_HEADERS})
++  target_include_directories(cxx_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
++  target_link_libraries(cxx_shared PUBLIC cxx-headers runtimes-libc-shared
++                                    PRIVATE ${LIBCXX_LIBRARIES}
++                                    PRIVATE llvm-libc-common-utilities)
++  set_target_properties(cxx_shared
++    PROPERTIES
++      EXCLUDE_FROM_ALL "$<IF:$<BOOL:${LIBCXX_ENABLE_SHARED}>,FALSE,TRUE>"
++      COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
++      LINK_FLAGS    "${LIBCXX_LINK_FLAGS}"
++      OUTPUT_NAME   "${LIBCXX_SHARED_OUTPUT_NAME}"
++      VERSION       "${LIBCXX_LIBRARY_VERSION}"
++      SOVERSION     "${LIBCXX_ABI_VERSION}"
++      DEFINE_SYMBOL ""
+   )
+-endif()
++  cxx_add_common_build_flags(cxx_shared)
++
++  if(ZOS)
++    add_custom_command(TARGET cxx_shared POST_BUILD
++      COMMAND
++        ${LIBCXX_SOURCE_DIR}/utils/zos_rename_dll_side_deck.sh
++        $<TARGET_LINKER_FILE_NAME:cxx_shared> $<TARGET_FILE_NAME:cxx_shared> "${LIBCXX_DLL_NAME}"
++      COMMENT "Rename dll name inside the side deck file"
++      WORKING_DIRECTORY $<TARGET_FILE_DIR:cxx_shared>
++    )
++  endif()
++
++  # Link against libc++abi
++  if (LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY)
++    target_link_libraries(cxx_shared PRIVATE libcxx-abi-shared-objects)
++  else()
++    target_link_libraries(cxx_shared PUBLIC libcxx-abi-shared)
++  endif()
+ 
+-# Link against libc++abi
+-if (LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY)
+-  target_link_libraries(cxx_shared PRIVATE libcxx-abi-shared-objects)
+-else()
+-  target_link_libraries(cxx_shared PUBLIC libcxx-abi-shared)
+ endif()
+ 
+ # Maybe force some symbols to be weak, not weak or not exported.
+diff --git a/libcxxabi/CMakeLists.txt b/libcxxabi/CMakeLists.txt
+index cf478bce..812f6df8 100644
+--- a/libcxxabi/CMakeLists.txt
++++ b/libcxxabi/CMakeLists.txt
+@@ -49,6 +49,8 @@ include(HandleCompilerRT)
+ option(LIBCXXABI_ENABLE_EXCEPTIONS
+   "Provide support for exceptions in the runtime.
+   When disabled, libc++abi does not support stack unwinding and other exceptions-related features." ON)
++option(LIBCXXABI_ENABLE_RTTI
++  "Provide support for RTTI in the runtime." ON)
+ option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
+ option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." OFF)
+ option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
+diff --git a/libcxxabi/src/CMakeLists.txt b/libcxxabi/src/CMakeLists.txt
+index 0675577a..d70f08ec 100644
+--- a/libcxxabi/src/CMakeLists.txt
++++ b/libcxxabi/src/CMakeLists.txt
+@@ -16,7 +16,6 @@ set(LIBCXXABI_SOURCES
+   # Internal files
+   abort_message.cpp
+   fallback_malloc.cpp
+-  private_typeinfo.cpp
+ )
+ 
+ if (LIBCXXABI_ENABLE_NEW_DELETE_DEFINITIONS)
+@@ -43,6 +42,12 @@ if (LIBCXXABI_ENABLE_THREADS AND (UNIX OR FUCHSIA) AND NOT (APPLE OR CYGWIN)
+   )
+ endif()
+ 
++if (LIBCXXABI_ENABLE_RTTI)
++  list(APPEND LIBCXXABI_SOURCES
++    private_typeinfo.cpp
++  )
++endif()
++
+ set(LIBCXXABI_HEADERS
+   ../include/cxxabi.h
+ )
+@@ -195,6 +200,7 @@ target_compile_options(cxxabi_shared_objects PRIVATE "${LIBCXXABI_ADDITIONAL_COM
+ # TODO(LLVM 21): This can be dropped once we only support Clang >= 19.
+ target_add_compile_flags_if_supported(cxxabi_shared_objects PRIVATE -fsized-deallocation)
+ 
++if (LIBCXXABI_ENABLE_SHARED)
+ add_library(cxxabi_shared SHARED)
+ set_target_properties(cxxabi_shared
+   PROPERTIES
+@@ -219,7 +225,6 @@ target_link_libraries(cxxabi_shared
+   PUBLIC cxxabi_shared_objects runtimes-libc-shared
+   PRIVATE ${LIBCXXABI_LIBRARIES})
+ 
+-if (LIBCXXABI_ENABLE_SHARED)
+ list(APPEND LIBCXXABI_BUILD_TARGETS "cxxabi_shared")
+ endif()
+ if (LIBCXXABI_INSTALL_SHARED_LIBRARY)
+diff --git a/libunwind/src/CMakeLists.txt b/libunwind/src/CMakeLists.txt
+index 71663a22..1a4a6212 100644
+--- a/libunwind/src/CMakeLists.txt
++++ b/libunwind/src/CMakeLists.txt
+@@ -147,6 +147,7 @@ if (CMAKE_POSITION_INDEPENDENT_CODE OR NOT DEFINED CMAKE_POSITION_INDEPENDENT_CO
+   set_target_properties(unwind_shared_objects PROPERTIES POSITION_INDEPENDENT_CODE ON) # must set manually because it's an object library
+ endif()
+ 
++if (LIBUNWIND_ENABLE_SHARED)
+ add_library(unwind_shared SHARED)
+ target_link_libraries(unwind_shared PUBLIC unwind_shared_objects runtimes-libc-shared)
+ set_target_properties(unwind_shared
+@@ -159,7 +160,6 @@ set_target_properties(unwind_shared
+     SOVERSION   "1"
+ )
+ 
+-if (LIBUNWIND_ENABLE_SHARED)
+   list(APPEND LIBUNWIND_BUILD_TARGETS "unwind_shared")
+ endif()
+ if (LIBUNWIND_INSTALL_SHARED_LIBRARY)
