@@ -111,7 +111,7 @@ for i in "${!variants[@]}" ; do
     -DLIBCXX_ENABLE_STATIC=ON                                                 \
     -DLIBCXX_INCLUDE_BENCHMARKS=OFF                                           \
     -DLIBCXX_INCLUDE_TESTS=OFF                                                \
-    -DLIBCXX_ENABLE_LOCALIZATION=OFF                                          \
+    -DLIBCXX_ENABLE_LOCALIZATION=ON                                           \
     -DLIBUNWIND_ENABLE_ASSERTIONS=OFF                                         \
     -DLIBUNWIND_ENABLE_SHARED=OFF                                             \
     -DLIBUNWIND_ENABLE_STATIC=ON                                              \
