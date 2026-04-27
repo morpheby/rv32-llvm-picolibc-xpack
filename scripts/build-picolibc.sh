@@ -30,19 +30,12 @@ for s in "${PICOLIBC_CROSS_FILES_DIR}"/*.txt ; do
   b="$(basename "$s")"
   b="${b%.*}"
 
-  if [[ "${b}" == *_minimal ]]; then
-    MB_CAPABLE=false
-  else
-    MB_CAPABLE=true
-  fi
-
   meson setup "build-${b}/"       \
     --cross-file="${s}"           \
     --prefix="${PICOLIBC_PREFIX}" \
     -Dspecsdir=none               \
     -Dincludedir=include          \
     -Dlibdir=lib                  \
-    -Dmb-capable=${MB_CAPABLE}    \
     -Dmultilib=false              \
     --buildtype=minsize           \
     --reconfigure
