@@ -91,20 +91,15 @@ endif()
 set(COMMON_FLAGS
     --sysroot=${LLVM_TOOLCHAIN}
     ${ARCH_FLAGS}
-    -Os -ffast-math
     -Wall
     -fmessage-length=0
     -fsigned-char
     -ffunction-sections
     -fdata-sections
     -fno-common
-    -flto=full
-    -fvirtual-function-elimination
-    -fwhole-program-vtables
     ${_EXN_RTTI_FLAGS}
     -fcolor-diagnostics
     -D_GNU_SOURCE=1
-    -fconstexpr-steps=134217728
 )
 
 string(JOIN " " COMMON_FLAGS_STR ${COMMON_FLAGS})
