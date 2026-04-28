@@ -1,6 +1,6 @@
 {
   "name": "@morpheby/rv32-llvm-picolibc",
-  "version": "22.1.4-1.8.11-7.1",
+  "version": "22.1.4-1.8.11-8.1",
   "description": "Binary xpack: RISC-V LLVM sysroot (compiler-rt + picolibc + libcxx) for CH32V targets with xwchc extension",
   "main": "",
   "scripts": {
@@ -33,24 +33,24 @@
     "minimumXpmRequired": "0.20.5",
     "binaries": {
       "destination": "./.content",
-      "baseUrl": "https://github.com/morpheby/rv32-llvm-picolibc/releases/download/v22.1.4-1.8.11-7",
+      "baseUrl": "https://github.com/morpheby/rv32-llvm-picolibc/releases/download/v22.1.4-1.8.11-8",
       "skip": 1,
       "platforms": {
         "darwin-arm64": {
-          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-7.tar.gz",
-          "sha256": "6ed0535744a85d8c9db2c0b6e6a5a7d6126d19bc91973b04b0869fddc3f35bae"
+          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-8.tar.gz",
+          "sha256": "c8c668c4240de105f8f33ae030e0031145130f0523544d8a826974bd83186d49"
         },
         "darwin-x64": {
-          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-7.tar.gz",
-          "sha256": "6ed0535744a85d8c9db2c0b6e6a5a7d6126d19bc91973b04b0869fddc3f35bae"
+          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-8.tar.gz",
+          "sha256": "c8c668c4240de105f8f33ae030e0031145130f0523544d8a826974bd83186d49"
         },
         "linux-arm64": {
-          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-7.tar.gz",
-          "sha256": "6ed0535744a85d8c9db2c0b6e6a5a7d6126d19bc91973b04b0869fddc3f35bae"
+          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-8.tar.gz",
+          "sha256": "c8c668c4240de105f8f33ae030e0031145130f0523544d8a826974bd83186d49"
         },
         "linux-x64": {
-          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-7.tar.gz",
-          "sha256": "6ed0535744a85d8c9db2c0b6e6a5a7d6126d19bc91973b04b0869fddc3f35bae"
+          "fileName": "rv32-llvm-picolibc-22.1.4-1.8.11-8.tar.gz",
+          "sha256": "c8c668c4240de105f8f33ae030e0031145130f0523544d8a826974bd83186d49"
         }
       }
     }
